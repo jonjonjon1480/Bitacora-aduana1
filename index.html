@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bitácora CEDIS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#14171A; --surface:#1B1F23; --surface-2:#20262C; --surface-3:#2A323A;
+  --border:#38424C; --paper:#ECE7DB; --paper-line:#D8D1BF; --text:#EAE6DB;
+  --text-dim:#9BA6AF; --text-faint:#6C7680; --amber:#E3A23D; --teal:#4FA184;
+  --red:#C1523F; --blue:#6C93B8; --radius:3px;
+  --font-display:'Barlow Condensed',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:var(--surface);color:var(--text);font-family:var(--font-body);}
+#app{min-height:100vh;display:flex;flex-direction:column;}
+::selection{background:var(--amber);color:var(--ink);}
+
+.gate{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;}
+.gate-card{width:100%;max-width:420px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:34px 32px;}
+.gate-eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;color:var(--text-faint);margin-bottom:6px;}
+.gate-title{font-family:var(--font-display);font-weight:600;font-size:28px;line-height:1.1;margin:0 0 22px 0;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;}
+.field input,.field select,.field textarea{width:100%;background:var(--surface-3);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:var(--radius);font-family:var(--font-body);font-size:14px;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--amber);}
+.field-hint{font-size:11px;color:var(--text-faint);margin-top:4px;}
+.role-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px;}
+.role-btn{background:var(--surface-3);border:1px solid var(--border);color:var(--text-dim);padding:11px 8px;border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;text-align:center;line-height:1.3;}
+.role-btn.active{border-color:var(--amber);color:var(--amber);background:rgba(227,162,61,0.08);}
+.btn{background:var(--amber);color:#241C0D;border:none;padding:11px 18px;border-radius:var(--radius);font-weight:700;font-size:14px;cursor:pointer;}
+.btn:hover{background:#EDB157;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border);padding:9px 14px;border-radius:var(--radius);font-size:13px;cursor:pointer;}
+.btn-ghost:hover{color:var(--text);border-color:var(--text-dim);}
+.btn-small{padding:6px 10px;font-size:12px;}
+.auth-error{background:rgba(193,82,63,0.12);border:1px solid var(--red);color:#F0B3A8;font-size:13px;padding:9px 12px;border-radius:var(--radius);margin-bottom:14px;}
+.auth-note{font-size:12px;color:var(--text-faint);margin-top:16px;line-height:1.5;}
+
+.shell{flex:1;display:flex;min-height:100vh;}
+.sidebar{width:220px;flex-shrink:0;background:var(--surface-2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 14px;}
+.brand{font-family:var(--font-display);font-weight:700;font-size:22px;margin-bottom:2px;}
+.brand-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);margin-bottom:26px;}
+.nav-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text-dim);font-size:14px;font-weight:600;padding:10px 12px;border-radius:var(--radius);cursor:pointer;margin-bottom:4px;font-family:var(--font-body);}
+.nav-item:hover{color:var(--text);background:var(--surface-3);}
+.nav-item.active{color:var(--ink);background:var(--amber);}
+.badge-id{margin-top:auto;background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius);padding:12px;}
+.badge-id .who{font-weight:700;font-size:14px;}
+.badge-id .area{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);margin-top:2px;}
+.badge-id button{margin-top:10px;width:100%;}
+
+.main{flex:1;padding:32px 40px;overflow-y:auto;}
+.page-title{font-family:var(--font-display);font-weight:600;font-size:28px;margin:0 0 4px 0;}
+.page-sub{color:var(--text-dim);font-size:14px;margin:0 0 28px 0;}
+
+.ticket{background:var(--paper);color:var(--ink);border-radius:2px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,0.4);}
+.ticket-head{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 18px;border-bottom:1px dashed var(--paper-line);cursor:pointer;gap:12px;}
+.ticket-folio{font-family:var(--font-mono);font-size:11px;color:#7A7362;letter-spacing:.03em;}
+.ticket-title{font-weight:700;font-size:15px;margin:3px 0 4px 0;}
+.ticket-meta{font-size:12.5px;color:#6B6455;}
+.ticket-meta span{margin-right:10px;}
+.stamp{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.05em;padding:5px 10px;border:2px solid currentColor;border-radius:2px;transform:rotate(-3deg);white-space:nowrap;text-transform:uppercase;flex-shrink:0;}
+.stamp.pendiente{color:var(--red);} .stamp.respondida{color:var(--teal);} .stamp.cerrada{color:#7A7362;}
+.ticket-body{padding:16px 18px;}
+.unidad-box{background:#DFD9C7;border:1px solid var(--paper-line);border-radius:2px;padding:10px 12px;margin-bottom:14px;font-size:12.5px;}
+.unidad-box .u-row{display:flex;gap:6px;margin-bottom:2px;}
+.unidad-box .u-label{color:#7A7362;min-width:90px;}
+.msg{display:flex;gap:10px;margin-bottom:12px;}
+.msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;font-weight:700;flex-shrink:0;color:#fff;}
+.msg-avatar.torre_control{background:var(--blue);} .msg-avatar.aduana{background:#8A6A3A;} .msg-avatar.direccion{background:#5B5750;}
+.msg-content{flex:1;min-width:0;}
+.msg-top{display:flex;align-items:baseline;gap:8px;font-size:12.5px;flex-wrap:wrap;}
+.msg-author{font-weight:700;}
+.msg-time{font-family:var(--font-mono);color:#8A8370;font-size:11px;}
+.msg-text{font-size:13.5px;line-height:1.5;margin-top:2px;white-space:pre-wrap;}
+.contra-flag{display:inline-block;margin-top:5px;font-family:var(--font-mono);font-size:10.5px;color:var(--red);border:1px solid var(--red);padding:2px 6px;border-radius:2px;}
+.msg-actions{margin-top:4px;} .msg-actions button{background:none;border:none;color:#8A8370;font-size:11px;cursor:pointer;text-decoration:underline;padding:0;}
+.reply-box{margin-top:10px;}
+.reply-box textarea{width:100%;background:#fff;border:1px solid var(--paper-line);border-radius:2px;padding:8px 10px;font-size:13.5px;resize:vertical;min-height:44px;color:var(--ink);font-family:var(--font-body);}
+.ticket-foot{display:flex;justify-content:flex-end;gap:8px;padding:0 18px 16px 18px;}
+.empty{color:var(--text-faint);font-size:14px;padding:30px 0;text-align:center;border:1px dashed var(--border);border-radius:var(--radius);}
+
+.attach-bar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.attach-btn{background:var(--surface-3);border:1px dashed var(--border);color:var(--text-dim);font-size:12px;padding:7px 10px;border-radius:2px;cursor:pointer;font-family:var(--font-body);}
+.form-card .attach-btn{background:#fff;border:1px dashed var(--paper-line);color:#6B6455;}
+.attach-chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.chip{position:relative;display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--paper-line);border-radius:2px;padding:5px 8px;font-size:11.5px;color:#4A4436;}
+.chip img{width:26px;height:26px;object-fit:cover;border-radius:2px;}
+.chip a{color:#4A4436;text-decoration:underline;}
+.chip .rm{cursor:pointer;color:var(--red);font-weight:700;margin-left:2px;}
+.attach-note{font-size:11px;color:var(--text-faint);margin-top:2px;}
+.uploading{font-family:var(--font-mono);font-size:11px;color:var(--amber);}
+
+.filters{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.filters select,.filters input{background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--radius);font-size:13px;}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.kpi{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;}
+.kpi-label{font-size:12px;color:var(--text-dim);margin-bottom:8px;}
+.kpi-value{font-family:var(--font-display);font-size:32px;font-weight:600;}
+.kpi-value.warn{color:var(--red);} .kpi-value.good{color:var(--teal);}
+.section-title{font-family:var(--font-display);font-size:19px;font-weight:600;margin:30px 0 12px 0;}
+table{width:100%;border-collapse:collapse;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+th{text-align:left;font-size:11.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.03em;padding:10px 14px;border-bottom:1px solid var(--border);font-weight:600;}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13.5px;}
+tr:last-child td{border-bottom:none;}
+.mono{font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);}
+.overdue-row td{color:var(--red);}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;}
+.dot.red{background:var(--red);} .dot.amber{background:var(--amber);}
+
+.form-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:600px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.loading{color:var(--text-faint);font-family:var(--font-mono);font-size:13px;padding:40px;text-align:center;}
+.user-row{display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:8px;}
+.user-row .u-name{font-weight:700;font-size:14px;}
+.user-row .u-meta{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);}
+.area-chip{font-family:var(--font-mono);font-size:10.5px;padding:3px 8px;border-radius:10px;border:1px solid var(--border);color:var(--text-dim);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged,
+  createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, collection, addDoc, updateDoc, onSnapshot,
+  query, orderBy, serverTimestamp, increment
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyBU2td-drt7kdzTgw4yRTFfX9ByXNGMt7Y",
+  authDomain: "asignacion-justa.firebaseapp.com",
+  databaseURL: "https://asignacion-justa-default-rtdb.firebaseio.com",
+  projectId: "asignacion-justa",
+  storageBucket: "asignacion-justa.firebasestorage.app",
+  messagingSenderId: "236628838198",
+  appId: "1:236628838198:web:00deac88b605c6b00cd597",
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const CATEGORIAS = [
+  'ODE / Manifiesto','Ruta / Recursos','Incidencia de personal operativo','Mantenimiento / Unidad',
+  'Devoluciones','Pedido extemporáneo','Coordinación VIP','Información de unidad','Urgencia','Otro',
+];
+const UNIDAD_CAMPOS = [
+  {key:'marca', label:'Marca'},{key:'modelo', label:'Modelo'},{key:'color', label:'Color'},
+  {key:'tipo_caja', label:'Tipo de caja'},{key:'placa', label:'PLACA'},{key:'operador', label:'OPERADOR'},
+  {key:'auxiliar1', label:'AUXILIAR 1'},{key:'auxiliar2', label:'AUXILIAR 2'},
+];
+
+let state = {
+  authReady:false, currentUser:null, profile:null, authError:'', authBusy:false,
+  view:'bandeja', tickets:[], ticketsUnsub:null,
+  expanded:{}, msgCache:{}, msgUnsubs:{},
+  config:{sla_horas:4},
+  filterEstado:'todos', dashFrom:null, dashTo:null,
+  pendingAttachments:{ nueva:[] }, uploading:{},
+  newCategoria:null,
+  users:[], usersUnsub:null,
+  newUserRole:null, newUserBusy:false, newUserError:'',
+};
+
+function uid(p){ return p+'-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function toDate(ts){ if(!ts) return null; return ts.toDate ? ts.toDate() : new Date(ts); }
+function fmtDT(ts){ const d=toDate(ts); if(!d) return '—'; return d.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); }
+function hoursBetween(a,b){ const da=toDate(a), db_=toDate(b); if(!da||!db_) return null; return (db_-da)/36e5; }
+function fmtHours(h){ if (h<1) return Math.round(h*60)+' min'; return h.toFixed(1)+' h'; }
+function folio(id){ return 'CEDIS-'+id.slice(-6).toUpperCase(); }
+function escapeHtml(s){ const d=document.createElement('div'); d.innerText=s||''; return d.innerHTML; }
+
+// ---------- Attachments (solo ubicación por ahora; fotos/PDF requieren Firebase Storage en plan Blaze) ----------
+function handleGeo(formKey){
+  if (!navigator.geolocation){ alert('Este navegador no soporta ubicación.'); return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const list = state.pendingAttachments[formKey] || (state.pendingAttachments[formKey]=[]);
+    list.push({ id: uid('att'), tipo:'ubicacion', nombre:'Ubicación', lat: pos.coords.latitude, lng: pos.coords.longitude });
+    render();
+  }, err=>alert('No se pudo obtener la ubicación: '+err.message), { enableHighAccuracy:true, timeout:10000 });
+}
+function removePendingAttachment(formKey, attId){
+  state.pendingAttachments[formKey] = (state.pendingAttachments[formKey]||[]).filter(a=>a.id!==attId);
+  render();
+}
+function renderAttachPicker(formKey, ticketId){
+  return `
+  <div class="attach-bar">
+    <button type="button" class="attach-btn" data-geo="${formKey}">📍 Adjuntar ubicación</button>
+  </div>
+  ${renderAttachChips(formKey)}
+  <div class="attach-note">Por ahora solo se puede adjuntar ubicación. Fotos y PDF quedaron pendientes.</div>`;
+}
+function renderAttachChips(formKey){
+  const list = state.pendingAttachments[formKey] || [];
+  if (list.length===0) return '';
+  return `<div class="attach-chips">${list.map(a=>renderChip(a,formKey,true)).join('')}</div>`;
+}
+function renderChip(a, formKey, removable){
+  let inner='';
+  if (a.tipo==='imagen') inner = `<img src="${a.url}"/><a href="${a.url}" target="_blank" rel="noopener">${escapeHtml(a.nombre)}</a>`;
+  else if (a.tipo==='pdf') inner = `<a href="${a.url}" target="_blank" rel="noopener">📄 ${escapeHtml(a.nombre)}</a>`;
+  else if (a.tipo==='ubicacion') inner = `<a href="https://www.google.com/maps?q=${a.lat},${a.lng}" target="_blank" rel="noopener">📍 Ver ubicación</a>`;
+  return `<div class="chip">${inner}${removable?`<span class="rm" data-rm="${formKey}|${a.id}">✕</span>`:''}</div>`;
+}
+function renderAttachedReadonly(adjuntos){
+  if (!adjuntos || adjuntos.length===0) return '';
+  return `<div class="attach-chips">${adjuntos.map(a=>renderChip(a,null,false)).join('')}</div>`;
+}
+
+// ---------- Auth ----------
+onAuthStateChanged(auth, async (user)=>{
+  state.authReady = true;
+  if (!user){
+    state.currentUser=null; state.profile=null;
+    detachAll();
+    render();
+    return;
+  }
+  state.currentUser = user;
+  try {
+    const snap = await getDoc(doc(db,'aduana_profiles',user.uid));
+    if (!snap.exists()){
+      state.authError = 'Tu cuenta no tiene un perfil de área asignado en la bitácora. Pide a Torre de Control que te dé acceso.';
+      state.profile = null;
+      await signOut(auth);
+      render();
+      return;
+    }
+    state.profile = snap.data();
+    state.authError = '';
+  } catch(e){
+    state.authError = 'No se pudo cargar tu perfil: ' + e.message;
+    render();
+    return;
+  }
+  attachTicketsListener();
+  loadConfig();
+  if (state.profile.area === 'torre_control') attachUsersListener();
+  render();
+});
+
+function detachAll(){
+  if (state.ticketsUnsub) { state.ticketsUnsub(); state.ticketsUnsub=null; }
+  if (state.usersUnsub) { state.usersUnsub(); state.usersUnsub=null; }
+  Object.values(state.msgUnsubs).forEach(u=>u());
+  state.msgUnsubs = {}; state.msgCache = {}; state.tickets = []; state.users = [];
+}
+
+async function loadConfig(){
+  try {
+    const snap = await getDoc(doc(db,'aduana_config','main'));
+    state.config = snap.exists() ? snap.data() : {sla_horas:4};
+  } catch(e){ state.config = {sla_horas:4}; }
+  render();
+}
+async function saveConfig(){
+  try { await setDoc(doc(db,'aduana_config','main'), state.config); } catch(e){ alert('No se pudo guardar el SLA: '+e.message); }
+}
+
+function attachTicketsListener(){
+  const q = query(collection(db,'aduana_tickets'), orderBy('created_at','desc'));
+  state.ticketsUnsub = onSnapshot(q, snap=>{
+    state.tickets = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    render();
+  }, err=>{ console.error(err); });
+}
+function attachUsersListener(){
+  state.usersUnsub = onSnapshot(collection(db,'aduana_profiles'), snap=>{
+    state.users = snap.docs.map(d=>({uid:d.id, ...d.data()}));
+    render();
+  });
+}
+function attachMsgListener(ticketId){
+  if (state.msgUnsubs[ticketId]) return;
+  const q = query(collection(db,'aduana_tickets',ticketId,'mensajes'), orderBy('timestamp','asc'));
+  state.msgUnsubs[ticketId] = onSnapshot(q, snap=>{
+    state.msgCache[ticketId] = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    render();
+  });
+}
+function detachMsgListener(ticketId){
+  if (state.msgUnsubs[ticketId]){ state.msgUnsubs[ticketId](); delete state.msgUnsubs[ticketId]; }
+}
+
+async function doLogin(){
+  const email = document.getElementById('li-email').value.trim();
+  const password = document.getElementById('li-password').value;
+  if (!email || !password){ state.authError='Escribe tu correo y contraseña.'; render(); return; }
+  state.authBusy = true; state.authError=''; render();
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch(e){
+    state.authError = 'Correo o contraseña incorrectos.';
+  }
+  state.authBusy = false; render();
+}
+function doLogout(){ signOut(auth); }
+
+async function crearUsuario(){
+  const nombre = document.getElementById('nu-nombre').value.trim();
+  const email = document.getElementById('nu-email').value.trim();
+  const password = document.getElementById('nu-password').value;
+  const area = state.newUserRole;
+  if (!nombre || !email || !password || !area){ state.newUserError='Completa todos los campos y elige el área.'; render(); return; }
+  if (password.length < 6){ state.newUserError='La contraseña debe tener al menos 6 caracteres.'; render(); return; }
+  state.newUserBusy = true; state.newUserError=''; render();
+  try {
+    const secondaryApp = initializeApp(firebaseConfig, 'secondary-'+Date.now());
+    const secondaryAuth = getAuth(secondaryApp);
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+    const newUid = cred.user.uid;
+    await signOut(secondaryAuth);
+    await deleteApp(secondaryApp);
+    await setDoc(doc(db,'aduana_profiles',newUid), {
+      nombre, email, area, activo:true, creado_por: state.profile.nombre, creado_en: serverTimestamp(),
+    });
+    document.getElementById('nu-nombre').value='';
+    document.getElementById('nu-email').value='';
+    document.getElementById('nu-password').value='';
+    state.newUserRole = null;
+  } catch(e){
+    state.newUserError = e.code === 'auth/email-already-in-use' ? 'Ese correo ya tiene cuenta.' : ('No se pudo crear: ' + e.message);
+  }
+  state.newUserBusy = false; render();
+}
+
+// ---------- Domain helpers ----------
+function deriveEstado(t){
+  if (t.cerrada) return 'cerrada';
+  if (!t.ultimo_mensaje_area) return 'pendiente';
+  return t.ultimo_mensaje_area === 'torre_control' ? 'pendiente' : 'respondida';
+}
+
+// ---------- Render ----------
+function render(){
+  const app = document.getElementById('app');
+  if (!state.authReady){ app.innerHTML = '<div class="loading">Cargando…</div>'; return; }
+  if (!state.currentUser || !state.profile){ app.innerHTML = renderGate(); attachGateEvents(); return; }
+  app.innerHTML = renderShell(); attachShellEvents();
+}
+
+function renderGate(){
+  return `
+  <div class="gate">
+    <div class="gate-card">
+      <div class="gate-eyebrow">CEDIS · CONTROL DE SOLICITUDES</div>
+      <h1 class="gate-title">Bitácora Torre de<br/>Control ⇄ Aduana</h1>
+      ${state.authError ? `<div class="auth-error">${escapeHtml(state.authError)}</div>` : ''}
+      <div class="field"><label>Correo</label><input id="li-email" type="email" autocomplete="username"/></div>
+      <div class="field"><label>Contraseña</label><input id="li-password" type="password" autocomplete="current-password"/></div>
+      <button class="btn" id="btn-login" style="width:100%;" ${state.authBusy?'disabled':''}>${state.authBusy?'Entrando…':'Entrar'}</button>
+      <div class="auth-note">No hay registro abierto. Las cuentas las crea Torre de Control desde dentro de la app.</div>
+    </div>
+  </div>`;
+}
+function attachGateEvents(){
+  document.getElementById('btn-login').addEventListener('click', doLogin);
+  document.getElementById('li-password').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+}
+
+function navItems(){
+  const items = [ {id:'bandeja', label:'Bandeja'}, {id:'tablero', label:'Tablero'} ];
+  if (state.profile.area === 'torre_control'){
+    items.unshift({id:'nueva', label:'Nueva solicitud'});
+    items.push({id:'usuarios', label:'Usuarios'});
+  }
+  return items;
+}
+function roleLabel(r){ return r==='torre_control'?'Torre de Control':r==='aduana'?'Aduana':'Dirección (lectura)'; }
+
+function renderShell(){
+  return `
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand">Bitácora</div>
+      <div class="brand-sub">CEDIS · TC ⇄ ADUANA</div>
+      ${navItems().map(it=>`<button class="nav-item ${state.view===it.id?'active':''}" data-view="${it.id}">${it.label}</button>`).join('')}
+      <div class="badge-id">
+        <div class="who">${escapeHtml(state.profile.nombre)}</div>
+        <div class="area">${roleLabel(state.profile.area)}</div>
+        <button class="btn-ghost btn-small" id="btn-logout" style="width:100%;">Cerrar sesión</button>
+      </div>
+    </div>
+    <div class="main">
+      ${state.view==='nueva' ? renderNueva() : ''}
+      ${state.view==='bandeja' ? renderBandeja() : ''}
+      ${state.view==='tablero' ? renderTablero() : ''}
+      ${state.view==='usuarios' ? renderUsuarios() : ''}
+    </div>
+  </div>`;
+}
+
+function renderNueva(){
+  const cat = state.newCategoria || CATEGORIAS[0];
+  return `
+  <h1 class="page-title">Nueva solicitud</h1>
+  <p class="page-sub">Se envía directo a la bandeja de Aduana con folio, fecha y hora.</p>
+  <div class="form-card">
+    <div class="field"><label>Categoría</label>
+      <select id="f-categoria">${CATEGORIAS.map(c=>`<option ${c===cat?'selected':''}>${c}</option>`).join('')}</select>
+    </div>
+    ${cat==='Información de unidad' ? `<div class="grid-2">${UNIDAD_CAMPOS.map(c=>`<div class="field"><label>${c.label}</label><input data-unidad="${c.key}" type="text"/></div>`).join('')}</div>` : ''}
+    <div class="grid-2">
+      <div class="field"><label>Referencia (ODE, SKU, ruta…)</label><input id="f-ref" type="text" placeholder="Ej. ODE-48213"/></div>
+      <div class="field"><label>Prioridad</label>
+        <select id="f-prioridad"><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Descripción de lo que necesitas</label><textarea id="f-desc" rows="4" placeholder="Sé específico: qué necesitas confirmar y para cuándo."></textarea></div>
+    <div class="field"><label>Adjuntos</label>${renderAttachPicker('nueva')}</div>
+    <button class="btn" id="btn-crear">Enviar solicitud a Aduana</button>
+  </div>`;
+}
+
+function renderBandeja(){
+  let list = [...state.tickets];
+  if (state.filterEstado !== 'todos') list = list.filter(t=>deriveEstado(t)===state.filterEstado);
+  return `
+  <h1 class="page-title">Bandeja</h1>
+  <p class="page-sub">${list.length} solicitud${list.length===1?'':'es'} · SLA de respuesta: ${state.config.sla_horas} h</p>
+  <div class="filters">
+    <select id="filter-estado">
+      <option value="todos" ${state.filterEstado==='todos'?'selected':''}>Todos los estados</option>
+      <option value="pendiente" ${state.filterEstado==='pendiente'?'selected':''}>Pendientes</option>
+      <option value="respondida" ${state.filterEstado==='respondida'?'selected':''}>Respondidas</option>
+      <option value="cerrada" ${state.filterEstado==='cerrada'?'selected':''}>Cerradas</option>
+    </select>
+  </div>
+  ${list.length===0 ? '<div class="empty">No hay solicitudes con este filtro.</div>' : list.map(renderTicket).join('')}`;
+}
+
+function renderTicket(t){
+  const estado = deriveEstado(t);
+  const isOpen = !!state.expanded[t.id];
+  const sla = state.config.sla_horas;
+  const now = new Date();
+  const overdue = estado==='pendiente' && t.created_at && hoursBetween(t.created_at, now) > sla;
+  return `
+  <div class="ticket">
+    <div class="ticket-head" data-toggle="${t.id}">
+      <div>
+        <div class="ticket-folio">${folio(t.id)} · ${(t.categoria||'').toUpperCase()} · ${fmtDT(t.created_at)}</div>
+        <div class="ticket-title">${escapeHtml(t.referencia || '(sin referencia)')}</div>
+        <div class="ticket-meta">
+          <span>Solicitó: ${escapeHtml(t.requester_nombre||'')}</span>
+          <span>Prioridad: ${t.prioridad}</span>
+          ${overdue ? '<span style="color:var(--red);font-weight:700;">· fuera de SLA</span>' : ''}
+        </div>
+      </div>
+      <div class="stamp ${estado}">${estado==='pendiente' ? (overdue?'sin responder':'pendiente') : estado}</div>
+    </div>
+    ${isOpen ? renderTicketBody(t, estado) : ''}
+  </div>`;
+}
+
+function renderTicketBody(t, estado){
+  const mensajes = state.msgCache[t.id] || [];
+  return `
+  <div class="ticket-body">
+    ${t.unidad ? `<div class="unidad-box">${UNIDAD_CAMPOS.map(c=>`<div class="u-row"><span class="u-label">${c.label}:</span><span>${escapeHtml(t.unidad[c.key]||'—')}</span></div>`).join('')}</div>` : ''}
+    <div style="font-size:13.5px;color:#4A4436;margin-bottom:8px;line-height:1.5;">${escapeHtml(t.descripcion)}</div>
+    ${renderAttachedReadonly(t.adjuntos)}
+    <div style="margin-top:10px;">
+      ${mensajes.map(m=>renderMsg(t,m)).join('')}
+      ${mensajes.length===0 ? '<div style="font-size:12.5px;color:#8A8370;margin-bottom:10px;">Aún sin respuesta de Aduana.</div>' : ''}
+    </div>
+    ${!t.cerrada && (state.profile.area==='aduana' || state.profile.area==='torre_control') ? renderReplyBox(t) : ''}
+  </div>
+  <div class="ticket-foot">
+    ${!t.cerrada && state.profile.area!=='direccion' ? `<button class="btn-ghost btn-small" data-close="${t.id}">Cerrar solicitud</button>` : ''}
+  </div>`;
+}
+
+function renderMsg(t, m){
+  const initials = (m.autor_nombre||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  return `
+  <div class="msg">
+    <div class="msg-avatar ${m.area}">${initials}</div>
+    <div class="msg-content">
+      <div class="msg-top">
+        <span class="msg-author">${escapeHtml(m.autor_nombre)}</span>
+        <span class="mono msg-time">${roleLabel(m.area)} · ${fmtDT(m.timestamp)}</span>
+      </div>
+      <div class="msg-text">${escapeHtml(m.texto)}</div>
+      ${renderAttachedReadonly(m.adjuntos)}
+      ${m.contradiccion ? `<div class="contra-flag">⚠ marcado como contradicción${m.nota_contradiccion?': '+escapeHtml(m.nota_contradiccion):''}</div>` : ''}
+      ${(state.profile.area==='torre_control' && m.area==='aduana' && !m.contradiccion) ? `<div class="msg-actions"><button data-flag="${t.id}|${m.id}">Marcar contradicción con versión anterior</button></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderReplyBox(t){
+  const formKey = 'reply-'+t.id;
+  if (!state.pendingAttachments[formKey]) state.pendingAttachments[formKey] = [];
+  return `
+  <div class="reply-box">
+    <textarea id="ta-${formKey}" placeholder="${state.profile.area==='aduana' ? 'Responde con la información solicitada…' : 'Agrega una aclaración o vuelve a preguntar…'}"></textarea>
+    ${renderAttachPicker(formKey, t.id)}
+    <button class="btn btn-small" data-reply="${t.id}" style="margin-top:6px;">Enviar</button>
+  </div>`;
+}
+
+function renderTablero(){
+  const now = new Date();
+  const from = state.dashFrom ? new Date(state.dashFrom) : new Date(now-7*24*36e5);
+  const to = state.dashTo ? new Date(state.dashTo) : now;
+  const inRange = state.tickets.filter(t=>{ const c=toDate(t.created_at); return c && c>=from && c<=to; });
+  const total = inRange.length;
+  const pendientesAhora = state.tickets.filter(t=>deriveEstado(t)==='pendiente');
+  const sla = state.config.sla_horas;
+  const overdueNow = pendientesAhora.filter(t=>hoursBetween(t.created_at, now) > sla);
+
+  const withFirstResp = inRange.map(t=>({t, h: t.primera_respuesta_ts ? hoursBetween(t.created_at, t.primera_respuesta_ts) : null})).filter(x=>x.h!==null);
+  const avgResp = withFirstResp.length ? withFirstResp.reduce((s,x)=>s+x.h,0)/withFirstResp.length : null;
+  const withinSla = withFirstResp.filter(x=>x.h<=sla).length;
+  const pctSla = withFirstResp.length ? Math.round(100*withinSla/withFirstResp.length) : null;
+
+  const byResp = {};
+  inRange.forEach(t=>{
+    if (!t.primera_respuesta_autor) return;
+    const key = t.primera_respuesta_autor;
+    if (!byResp[key]) byResp[key] = {nombre:key, respondidas:0, sumaHoras:0, contradicciones:0};
+    byResp[key].respondidas += 1;
+    byResp[key].sumaHoras += hoursBetween(t.created_at, t.primera_respuesta_ts);
+    byResp[key].contradicciones += (t.num_contradicciones||0);
+  });
+  const rankRows = Object.values(byResp).sort((a,b)=>b.respondidas-a.respondidas);
+
+  return `
+  <h1 class="page-title">Tablero</h1>
+  <p class="page-sub">Rango: ${from.toLocaleDateString('es-MX')} — ${to.toLocaleDateString('es-MX')}</p>
+  <div class="filters">
+    <input type="date" id="dash-from" value="${from.toISOString().slice(0,10)}"/>
+    <input type="date" id="dash-to" value="${to.toISOString().slice(0,10)}"/>
+    ${state.profile.area==='torre_control' ? `<span style="color:var(--text-dim);font-size:13px;">SLA respuesta (h): </span><input type="number" id="sla-input" value="${sla}" style="width:60px;"/>` : ''}
+  </div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Solicitudes en el rango</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi"><div class="kpi-label">Pendientes ahora</div><div class="kpi-value ${overdueNow.length>0?'warn':''}">${pendientesAhora.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Tiempo promedio 1ª respuesta</div><div class="kpi-value">${avgResp!==null?fmtHours(avgResp):'—'}</div></div>
+    <div class="kpi"><div class="kpi-label">% dentro de SLA (${sla} h)</div><div class="kpi-value ${pctSla!==null&&pctSla<70?'warn':'good'}">${pctSla!==null?pctSla+'%':'—'}</div></div>
+  </div>
+  <div class="section-title">Pendientes sin respuesta, ordenadas por antigüedad</div>
+  ${pendientesAhora.length===0 ? '<div class="empty">No hay solicitudes pendientes.</div>' : `
+  <table><thead><tr><th>Folio</th><th>Referencia</th><th>Solicitó</th><th>Esperando desde</th><th>Horas transcurridas</th></tr></thead><tbody>
+    ${pendientesAhora.sort((a,b)=>toDate(a.created_at)-toDate(b.created_at)).map(t=>{
+      const h = hoursBetween(t.created_at, now); const isOver = h > sla;
+      return `<tr class="${isOver?'overdue-row':''}">
+        <td class="mono">${folio(t.id)}</td><td>${escapeHtml(t.referencia||'—')}</td><td>${escapeHtml(t.requester_nombre||'')}</td>
+        <td class="mono">${fmtDT(t.created_at)}</td><td><span class="dot ${isOver?'red':'amber'}"></span>${fmtHours(h)}</td>
+      </tr>`;
+    }).join('')}
+  </tbody></table>`}
+  <div class="section-title">Desempeño por responsable de Aduana</div>
+  ${rankRows.length===0 ? '<div class="empty">Aún no hay respuestas registradas en este rango.</div>' : `
+  <table><thead><tr><th>Responsable</th><th>Solicitudes respondidas</th><th>Tiempo promedio de respuesta</th><th>Contradicciones marcadas</th></tr></thead><tbody>
+    ${rankRows.map(row=>`<tr><td>${escapeHtml(row.nombre)}</td><td>${row.respondidas}</td><td>${fmtHours(row.sumaHoras/row.respondidas)}</td><td>${row.contradicciones>0?'<span class="dot red"></span>':''}${row.contradicciones}</td></tr>`).join('')}
+  </tbody></table>`}`;
+}
+
+function renderUsuarios(){
+  const role = state.newUserRole;
+  return `
+  <h1 class="page-title">Usuarios</h1>
+  <p class="page-sub">Solo Torre de Control puede crear cuentas. El área queda fija.</p>
+  <div class="form-card" style="margin-bottom:28px;">
+    ${state.newUserError ? `<div class="auth-error">${escapeHtml(state.newUserError)}</div>` : ''}
+    <div class="grid-2">
+      <div class="field"><label>Nombre completo</label><input id="nu-nombre" type="text"/></div>
+      <div class="field"><label>Correo</label><input id="nu-email" type="email"/></div>
+    </div>
+    <div class="field"><label>Contraseña temporal</label><input id="nu-password" type="text" placeholder="mín. 6 caracteres"/></div>
+    <div class="field"><label>Área</label>
+      <div class="role-grid">
+        <button type="button" class="role-btn ${role==='torre_control'?'active':''}" data-newrole="torre_control">Torre de<br/>Control</button>
+        <button type="button" class="role-btn ${role==='aduana'?'active':''}" data-newrole="aduana">Aduana</button>
+        <button type="button" class="role-btn ${role==='direccion'?'active':''}" data-newrole="direccion">Dirección<br/>(lectura)</button>
+      </div>
+    </div>
+    <button class="btn" id="btn-crear-usuario" ${state.newUserBusy?'disabled':''}>${state.newUserBusy?'Creando…':'Crear cuenta'}</button>
+  </div>
+  <div class="section-title">Cuentas existentes</div>
+  ${state.users.map(u=>`
+    <div class="user-row">
+      <div><div class="u-name">${escapeHtml(u.nombre)}</div><div class="u-meta">${escapeHtml(u.email)}</div></div>
+      <span class="area-chip">${roleLabel(u.area)}</span>
+    </div>`).join('') || '<div class="empty">Sin cuentas registradas todavía.</div>'}`;
+}
+
+// ---------- Events ----------
+function attachShellEvents(){
+  document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click', ()=>{ state.view=b.dataset.view; render(); }));
+  const lo = document.getElementById('btn-logout'); if (lo) lo.addEventListener('click', doLogout);
+
+  if (state.view==='nueva'){
+    const catSel = document.getElementById('f-categoria');
+    if (catSel) catSel.addEventListener('change', e=>{ state.newCategoria=e.target.value; render(); });
+    wireAttachPicker('nueva');
+    const bc = document.getElementById('btn-crear'); if (bc) bc.addEventListener('click', crearSolicitud);
+  }
+  if (state.view==='bandeja'){
+    const fe = document.getElementById('filter-estado');
+    if (fe) fe.addEventListener('change', e=>{ state.filterEstado=e.target.value; render(); });
+    document.querySelectorAll('[data-toggle]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const id = el.dataset.toggle;
+        state.expanded[id] = !state.expanded[id];
+        if (state.expanded[id]) attachMsgListener(id); else detachMsgListener(id);
+        render();
+      });
+    });
+    document.querySelectorAll('[data-reply]').forEach(el=>{
+      wireAttachPicker('reply-'+el.dataset.reply, el.dataset.reply);
+      el.addEventListener('click', ()=>enviarRespuesta(el.dataset.reply));
+    });
+    document.querySelectorAll('[data-flag]').forEach(el=>{
+      el.addEventListener('click', ()=>{ const [tid,mid]=el.dataset.flag.split('|'); marcarContradiccion(tid,mid); });
+    });
+    document.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click', ()=>cerrarSolicitud(el.dataset.close)));
+  }
+  if (state.view==='tablero'){
+    const df=document.getElementById('dash-from'), dt=document.getElementById('dash-to');
+    if (df) df.addEventListener('change', e=>{ state.dashFrom=e.target.value; render(); });
+    if (dt) dt.addEventListener('change', e=>{ state.dashTo=e.target.value; render(); });
+    const si=document.getElementById('sla-input');
+    if (si) si.addEventListener('change', e=>{ state.config.sla_horas=Number(e.target.value)||4; saveConfig(); render(); });
+  }
+  if (state.view==='usuarios'){
+    document.querySelectorAll('[data-newrole]').forEach(b=>b.addEventListener('click', ()=>{ state.newUserRole=b.dataset.newrole; render(); }));
+    const bcu = document.getElementById('btn-crear-usuario'); if (bcu) bcu.addEventListener('click', crearUsuario);
+  }
+}
+function wireAttachPicker(formKey, ticketId){
+  const geoBtn = document.querySelector(`[data-geo="${formKey}"]`);
+  if (geoBtn) geoBtn.addEventListener('click', ()=>handleGeo(formKey));
+  document.querySelectorAll(`[data-rm^="${formKey}|"]`).forEach(el=>{
+    el.addEventListener('click', ()=>{ const [,attId]=el.dataset.rm.split('|'); removePendingAttachment(formKey,attId); });
+  });
+}
+
+async function crearSolicitud(){
+  const categoria = document.getElementById('f-categoria').value;
+  const referencia = document.getElementById('f-ref').value.trim();
+  const prioridad = document.getElementById('f-prioridad').value;
+  const descripcion = document.getElementById('f-desc').value.trim();
+  if (!descripcion){ alert('Describe qué necesitas.'); return; }
+  let unidad = null;
+  if (categoria === 'Información de unidad'){
+    unidad = {};
+    for (const c of UNIDAD_CAMPOS){
+      const val = document.querySelector(`[data-unidad="${c.key}"]`).value.trim();
+      if (!val){ alert('Completa todos los campos de la unidad: '+c.label); return; }
+      unidad[c.key] = val;
+    }
+  }
+  const adjuntos = state.pendingAttachments['nueva'] || [];
+  try {
+    await addDoc(collection(db,'aduana_tickets'), {
+      created_at: serverTimestamp(), requester_uid: state.currentUser.uid, requester_nombre: state.profile.nombre,
+      categoria, referencia, prioridad, descripcion, unidad, adjuntos,
+      cerrada:false, cerrada_at:null, ultimo_mensaje_area:null, ultimo_mensaje_ts:null,
+      primera_respuesta_ts:null, primera_respuesta_autor:null, num_contradicciones:0,
+    });
+  } catch(e){ alert('No se pudo crear la solicitud: '+e.message); return; }
+  state.pendingAttachments['nueva'] = [];
+  state.newCategoria = CATEGORIAS[0];
+  state.view = 'bandeja'; state.filterEstado='todos';
+  render();
+}
+
+async function enviarRespuesta(ticketId){
+  const formKey = 'reply-'+ticketId;
+  const ta = document.getElementById('ta-'+formKey);
+  const texto = ta.value.trim();
+  const adjuntos = state.pendingAttachments[formKey] || [];
+  if (!texto && adjuntos.length===0) return;
+  const t = state.tickets.find(x=>x.id===ticketId);
+  try {
+    await addDoc(collection(db,'aduana_tickets',ticketId,'mensajes'), {
+      autor_uid: state.currentUser.uid, autor_nombre: state.profile.nombre, area: state.profile.area,
+      texto, timestamp: serverTimestamp(), contradiccion:false, adjuntos,
+    });
+    const patch = { ultimo_mensaje_area: state.profile.area, ultimo_mensaje_ts: serverTimestamp() };
+    if (state.profile.area === 'aduana' && !t.primera_respuesta_ts){
+      patch.primera_respuesta_ts = serverTimestamp();
+      patch.primera_respuesta_autor = state.profile.nombre;
+    }
+    await updateDoc(doc(db,'aduana_tickets',ticketId), patch);
+  } catch(e){ alert('No se pudo enviar: '+e.message); return; }
+  state.pendingAttachments[formKey] = [];
+  render();
+}
+
+async function marcarContradiccion(ticketId, msgId){
+  const nota = prompt('¿Qué versión anterior contradice? (breve nota, opcional)') || '';
+  try {
+    await updateDoc(doc(db,'aduana_tickets',ticketId,'mensajes',msgId), { contradiccion:true, nota_contradiccion:nota });
+    await updateDoc(doc(db,'aduana_tickets',ticketId), { num_contradicciones: increment(1) });
+  } catch(e){ alert('No se pudo marcar: '+e.message); }
+}
+
+async function cerrarSolicitud(ticketId){
+  try { await updateDoc(doc(db,'aduana_tickets',ticketId), { cerrada:true, cerrada_at: serverTimestamp() }); }
+  catch(e){ alert('No se pudo cerrar: '+e.message); }
+}
+
+render();
+</script>
+</body>
+</html>
