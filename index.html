@@ -407,7 +407,7 @@ function renderNueva(){
     <div class="field"><label>Categoría</label>
       <select id="f-categoria">${CATEGORIAS.map(c=>`<option ${c===cat?'selected':''}>${c}</option>`).join('')}</select>
     </div>
-    ${cat==='Información de unidad' ? `<div class="grid-2">${UNIDAD_CAMPOS.map(c=>`<div class="field"><label>${c.label}</label><input data-unidad="${c.key}" type="text"/></div>`).join('')}</div>` : ''}
+    ${cat==='Información de unidad' ? `<div style="font-size:12.5px;color:var(--text-dim);margin:-2px 0 10px;">Aduana llenará los datos de la unidad (marca, modelo, placa, etc.) al responder. Usa la descripción para indicar a qué unidad/ruta te refieres.</div>` : ''}
     <div class="grid-2">
       <div class="field"><label>Referencia (ODE, SKU, ruta…)</label><input id="f-ref" type="text" placeholder="Ej. ODE-48213"/></div>
       <div class="field"><label>Prioridad</label>
@@ -500,8 +500,11 @@ function renderMsg(t, m){
 function renderReplyBox(t){
   const formKey = 'reply-'+t.id;
   if (!state.pendingAttachments[formKey]) state.pendingAttachments[formKey] = [];
+  const pedirUnidad = t.categoria === 'Información de unidad' && state.profile.area === 'aduana';
   return `
   <div class="reply-box">
+    ${pedirUnidad ? `<div style="font-size:12px;color:#6B6552;margin-bottom:6px;">Llena los datos de la unidad para esta solicitud:</div>
+    <div class="grid-2" style="margin-bottom:8px;">${UNIDAD_CAMPOS.map(c=>`<div class="field"><label>${c.label}</label><input data-unidad-reply="${c.key}" type="text" value="${escapeHtml((t.unidad&&t.unidad[c.key])||'')}"/></div>`).join('')}</div>` : ''}
     <textarea id="ta-${formKey}" placeholder="${state.profile.area==='aduana' ? 'Responde con la información solicitada…' : 'Agrega una aclaración o vuelve a preguntar…'}"></textarea>
     ${renderAttachPicker(formKey, t.id)}
     <button class="btn btn-small" data-reply="${t.id}" style="margin-top:6px;">Enviar</button>
@@ -652,15 +655,7 @@ async function crearSolicitud(){
   const prioridad = document.getElementById('f-prioridad').value;
   const descripcion = document.getElementById('f-desc').value.trim();
   if (!descripcion){ alert('Describe qué necesitas.'); return; }
-  let unidad = null;
-  if (categoria === 'Información de unidad'){
-    unidad = {};
-    for (const c of UNIDAD_CAMPOS){
-      const val = document.querySelector(`[data-unidad="${c.key}"]`).value.trim();
-      if (!val){ alert('Completa todos los campos de la unidad: '+c.label); return; }
-      unidad[c.key] = val;
-    }
-  }
+  const unidad = null; // Para "Información de unidad" los datos los llena Aduana al responder, no quien solicita.
   const adjuntos = state.pendingAttachments['nueva'] || [];
   try {
     await addDoc(collection(db,'aduana_tickets'), {
@@ -681,14 +676,27 @@ async function enviarRespuesta(ticketId){
   const ta = document.getElementById('ta-'+formKey);
   const texto = ta.value.trim();
   const adjuntos = state.pendingAttachments[formKey] || [];
-  if (!texto && adjuntos.length===0) return;
   const t = state.tickets.find(x=>x.id===ticketId);
+  const pedirUnidad = t.categoria === 'Información de unidad' && state.profile.area === 'aduana';
+  let unidadPatch = null;
+  if (pedirUnidad){
+    unidadPatch = {};
+    for (const c of UNIDAD_CAMPOS){
+      const val = document.querySelector(`[data-unidad-reply="${c.key}"]`).value.trim();
+      if (!val){ alert('Completa todos los campos de la unidad: '+c.label); return; }
+      unidadPatch[c.key] = val;
+    }
+  }
+  if (!texto && adjuntos.length===0 && !pedirUnidad) return;
   try {
-    await addDoc(collection(db,'aduana_tickets',ticketId,'mensajes'), {
-      autor_uid: state.currentUser.uid, autor_nombre: state.profile.nombre, area: state.profile.area,
-      texto, timestamp: serverTimestamp(), contradiccion:false, adjuntos,
-    });
+    if (texto || adjuntos.length>0){
+      await addDoc(collection(db,'aduana_tickets',ticketId,'mensajes'), {
+        autor_uid: state.currentUser.uid, autor_nombre: state.profile.nombre, area: state.profile.area,
+        texto, timestamp: serverTimestamp(), contradiccion:false, adjuntos,
+      });
+    }
     const patch = { ultimo_mensaje_area: state.profile.area, ultimo_mensaje_ts: serverTimestamp() };
+    if (unidadPatch) patch.unidad = unidadPatch;
     if (state.profile.area === 'aduana' && !t.primera_respuesta_ts){
       patch.primera_respuesta_ts = serverTimestamp();
       patch.primera_respuesta_autor = state.profile.nombre;
